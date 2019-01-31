@@ -288,3 +288,31 @@ def test_follow_symlink_dir(tmpdir_factory):
 
     assert dir_1_py_1.is_file()
     assert not dir_1_pyc_1.exists()
+
+
+def test_recursive_symlink_dir(tmpdir_factory):
+    tmp_path_0 = Path(tmpdir_factory.mktemp('tmp_0'))
+
+    dir_0 = (tmp_path_0 / 'dir_0')
+    dir_1_link = (dir_0 / 'dir_1')
+
+    dir_0.mkdir()
+    dir_1_link.symlink_to(dir_0, target_is_directory=True)
+
+    dir_0_py_0 = dir_0 / 'script_0.py'
+    dir_0_pyc_0 = dir_0 / 'script_0.pyc'
+    dir_0_py_1 = dir_0 / 'script_1.py'
+    dir_0_pyc_1 = dir_0 / 'script_1.pyc'
+
+    dir_0_py_0.write_bytes(b'')
+    dir_0_pyc_0.write_bytes(b'')
+    dir_0_py_1.write_bytes(b'')
+    dir_0_pyc_1.write_bytes(b'')
+
+    safe_delete_pyc(tmp_path_0, follow_symlinks=True)
+
+    assert dir_0_py_0.is_file()
+    assert not dir_0_pyc_0.exists()
+
+    assert dir_0_py_1.is_file()
+    assert not dir_0_pyc_1.exists()
