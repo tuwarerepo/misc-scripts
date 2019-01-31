@@ -10,7 +10,8 @@ from safe_delete_pyc.safe_delete_pyc import safe_delete_pyc
 fake = Factory.create()
 
 
-def test_multiple_subdirectories_and_files(tmpdir):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_multiple_subdirectories_and_files(tmpdir, verbose):
     tmp_path = Path(tmpdir)
 
     dir_0 = (tmp_path / 'dir_0')
@@ -65,7 +66,7 @@ def test_multiple_subdirectories_and_files(tmpdir):
     dir_1_1_py_1.write_bytes(b'')
     dir_1_1_pyc_1.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path)
+    safe_delete_pyc(tmp_path, verbose=verbose)
 
     assert root_py_0.is_file()
     assert not root_pyc_0.exists()
@@ -98,7 +99,8 @@ def test_multiple_subdirectories_and_files(tmpdir):
     assert not dir_1_1_pyc_1.exists()
 
 
-def test_directory_isolation(tmpdir):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_directory_isolation(tmpdir, verbose):
     tmp_path = Path(tmpdir)
 
     dir_0 = tmp_path / 'dir_0'
@@ -114,7 +116,7 @@ def test_directory_isolation(tmpdir):
     dir_0_py_0.write_bytes(b'')
     dir_0_pyc_0.write_bytes(b'')
 
-    safe_delete_pyc(dir_0)
+    safe_delete_pyc(dir_0, verbose=verbose)
 
     assert root_py_0.is_file()
     assert root_pyc_0.is_file()
@@ -123,7 +125,8 @@ def test_directory_isolation(tmpdir):
     assert not dir_0_pyc_0.exists()
 
 
-def test_py_with_no_pyc(tmpdir):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_py_with_no_pyc(tmpdir, verbose):
     tmp_path = Path(tmpdir)
 
     root_py_0 = tmp_path / 'script_0.py'
@@ -131,13 +134,14 @@ def test_py_with_no_pyc(tmpdir):
 
     root_py_0.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path)
+    safe_delete_pyc(tmp_path, verbose=verbose)
 
     assert root_py_0.is_file()
     assert not root_pyc_0.exists()
 
 
-def test_pyc_with_no_py(tmpdir):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_pyc_with_no_py(tmpdir, verbose):
     tmp_path = Path(tmpdir)
 
     root_py_0 = tmp_path / 'script_0.py'
@@ -145,17 +149,18 @@ def test_pyc_with_no_py(tmpdir):
 
     root_pyc_0.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path)
+    safe_delete_pyc(tmp_path, verbose=verbose)
 
     assert not root_py_0.exists()
     assert root_pyc_0.is_file()
 
 
+@pytest.mark.parametrize('verbose', (False, True))
 @pytest.mark.skipif(
     not TEMP_DIR_CASE_SENSITIVE,
     reason="Requires a case-sensitive file system",
 )
-def test_case_sensitivity(tmpdir):
+def test_case_sensitivity(tmpdir, verbose):
     tmp_path = Path(tmpdir)
 
     py_path_and_pyc_path_seq = [
@@ -184,7 +189,7 @@ def test_case_sensitivity(tmpdir):
             if exist:
                 path.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path)
+    safe_delete_pyc(tmp_path, verbose=verbose)
 
     for (py_path, pyc_path), (py_exist, pyc_exist) in zip(
             py_path_and_pyc_path_seq,
@@ -198,7 +203,8 @@ def test_case_sensitivity(tmpdir):
             assert pyc_path.exists() == pyc_exist
 
 
-def test_ignore_symlink_dir(tmpdir_factory):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_ignore_symlink_dir(tmpdir_factory, verbose):
     tmp_path_0 = Path(tmpdir_factory.mktemp('tmp_0'))
     tmp_path_1 = Path(tmpdir_factory.mktemp('tmp_1'))
 
@@ -229,7 +235,7 @@ def test_ignore_symlink_dir(tmpdir_factory):
     dir_1_py_1.write_bytes(b'')
     dir_1_pyc_1.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path_0)
+    safe_delete_pyc(tmp_path_0, verbose=verbose)
 
     assert dir_0_py_0.is_file()
     assert not dir_0_pyc_0.exists()
@@ -244,7 +250,8 @@ def test_ignore_symlink_dir(tmpdir_factory):
     assert dir_1_pyc_1.exists()
 
 
-def test_follow_symlink_dir(tmpdir_factory):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_follow_symlink_dir(tmpdir_factory, verbose):
     tmp_path_0 = Path(tmpdir_factory.mktemp('tmp_0'))
     tmp_path_1 = Path(tmpdir_factory.mktemp('tmp_1'))
 
@@ -275,7 +282,7 @@ def test_follow_symlink_dir(tmpdir_factory):
     dir_1_py_1.write_bytes(b'')
     dir_1_pyc_1.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path_0, follow_symlinks=True)
+    safe_delete_pyc(tmp_path_0, follow_symlinks=True, verbose=verbose)
 
     assert dir_0_py_0.is_file()
     assert not dir_0_pyc_0.exists()
@@ -290,7 +297,8 @@ def test_follow_symlink_dir(tmpdir_factory):
     assert not dir_1_pyc_1.exists()
 
 
-def test_recursive_symlink_dir(tmpdir_factory):
+@pytest.mark.parametrize('verbose', (False, True))
+def test_recursive_symlink_dir(tmpdir_factory, verbose):
     tmp_path_0 = Path(tmpdir_factory.mktemp('tmp_0'))
 
     dir_0 = (tmp_path_0 / 'dir_0')
@@ -309,10 +317,26 @@ def test_recursive_symlink_dir(tmpdir_factory):
     dir_0_py_1.write_bytes(b'')
     dir_0_pyc_1.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path_0, follow_symlinks=True)
+    safe_delete_pyc(tmp_path_0, follow_symlinks=True, verbose=verbose)
 
     assert dir_0_py_0.is_file()
     assert not dir_0_pyc_0.exists()
 
     assert dir_0_py_1.is_file()
     assert not dir_0_pyc_1.exists()
+
+
+@pytest.mark.parametrize('verbose', (False, True))
+def test_dry_run(tmpdir, verbose):
+    tmp_path = Path(tmpdir)
+
+    root_py_0 = tmp_path / 'script_0.py'
+    root_pyc_0 = tmp_path / 'script_0.pyc'
+
+    root_py_0.write_bytes(b'')
+    root_pyc_0.write_bytes(b'')
+
+    safe_delete_pyc(tmp_path, verbose=verbose, dry_run=True)
+
+    assert root_py_0.is_file()
+    assert root_pyc_0.is_file()

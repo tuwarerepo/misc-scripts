@@ -98,9 +98,9 @@ def _walk_path(
         if len(py_file_paths) == 0:
 
             if verbose:
-                for py_file_path in py_file_paths:
+                for pyc_file_path in pyc_file_paths:
                     logging.warning("Orphaned .pyc file: '{}'".format(
-                        py_file_path,
+                        pyc_file_path,
                     ))
 
             continue
