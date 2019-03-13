@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from faker import Factory
@@ -149,7 +150,11 @@ def test_pyc_with_no_py(tmpdir, verbose):
 
     root_pyc_0.write_bytes(b'')
 
-    safe_delete_pyc(tmp_path, verbose=verbose)
+    with patch(
+        'safe_delete_pyc.safe_delete_pyc.user_confirm',
+        return_value=False,
+    ):
+        safe_delete_pyc(tmp_path, verbose=verbose)
 
     assert not root_py_0.exists()
     assert root_pyc_0.is_file()
@@ -188,8 +193,11 @@ def test_case_sensitivity(tmpdir, verbose):
         for path, exist in zip(path_seq, exist_seq):
             if exist:
                 path.write_bytes(b'')
-
-    safe_delete_pyc(tmp_path, verbose=verbose)
+    with patch(
+        'safe_delete_pyc.safe_delete_pyc.user_confirm',
+        return_value=False,
+    ):
+        safe_delete_pyc(tmp_path, verbose=verbose)
 
     for (py_path, pyc_path), (py_exist, pyc_exist) in zip(
             py_path_and_pyc_path_seq,
