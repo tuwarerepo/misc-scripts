@@ -27,12 +27,12 @@ class UserConfirm(object):
 
         line = input(prompt)
 
-        line_lower = line.lower()
+        line_clean = line.strip().lower()
 
-        delete_all = line_lower.startswith('a')
+        delete_all = line_clean.startswith('a')
         self.delete_all |= delete_all
 
-        delete_current = delete_all or line_lower.startswith('y')
+        delete_current = delete_all or line_clean.startswith('y')
 
         return delete_current
 
