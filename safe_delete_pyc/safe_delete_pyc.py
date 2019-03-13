@@ -97,7 +97,7 @@ def _parse_args():
 
 def _walk_path(
         root_path,
-        resolved_symlink_path_set,
+        seen_dir_path_set,
         follow_symlinks,
         verbose,
         dry_run,
@@ -119,15 +119,16 @@ def _walk_path(
             if path.is_symlink():
                 if (
                         not follow_symlinks or
-                        abs_path in resolved_symlink_path_set):
+                        abs_path in seen_dir_path_set):
 
                     continue
-                else:
-                    resolved_symlink_path_set.add(abs_path)
+
+            if follow_symlinks:
+                seen_dir_path_set.add(abs_path)
 
             _walk_path(
                 abs_path,
-                resolved_symlink_path_set,
+                seen_dir_path_set,
                 follow_symlinks,
                 verbose,
                 dry_run,
@@ -174,10 +175,11 @@ def safe_delete_pyc(
     if not abs_dir_path.is_dir():
         raise NotADirectoryError
 
-    resolved_symlink_path_set = set()
+    seen_dir_path_set = set() if follow_symlinks else None
+
     _walk_path(
         abs_dir_path,
-        resolved_symlink_path_set,
+        seen_dir_path_set,
         follow_symlinks,
         verbose,
         dry_run,
