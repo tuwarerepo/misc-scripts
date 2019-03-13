@@ -44,9 +44,9 @@ def _parse_args():
 
     parser = argparse.ArgumentParser(
         usage=(
-            "Delete *.pyc files. If there is not a matching .py file"
+            "Delete *.pyc files. If there is not a matching .py file "
             "with the same file name stem in the same directory, you "
-            "will be prompted whether to delete it."),
+            "will be prompted before deletion."),
     )
 
     parser.add_argument(
