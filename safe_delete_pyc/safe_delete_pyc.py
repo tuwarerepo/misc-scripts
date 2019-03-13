@@ -11,12 +11,42 @@ from collections import defaultdict
 from pathlib import Path
 
 
+class UserConfirm(object):
+
+    def __init__(self):
+        self.delete_all = False
+
+    def __call__(self, file_path):
+
+        if self.delete_all:
+            return True
+
+        prompt = (
+            "Are you sure you want to delete '{}'? [yes/no/all]\n"
+            "> ".format(file_path))
+
+        line = input(prompt)
+
+        line_lower = line.lower()
+
+        delete_all = line_lower.startswith('a')
+        self.delete_all |= delete_all
+
+        delete_current = delete_all or line_lower.startswith('y')
+
+        return delete_current
+
+
+user_confirm = UserConfirm()
+
+
 def _parse_args():
+
     parser = argparse.ArgumentParser(
         usage=(
-            "Delete *.pyc files. This will only delete files when "
-            "there is a matching .py file with the same file name "
-            "stem in the same directory."),
+            "Delete *.pyc files. If there is not a matching .py file"
+            "with the same file name stem in the same directory, you "
+            "will be prompted whether to delete it."),
     )
 
     parser.add_argument(
@@ -35,6 +65,13 @@ def _parse_args():
     )
 
     parser.add_argument(
+        '-o',
+        '--no-prompt-on-orphan',
+        action='store_true',
+        help="Do not prompt before deleting orphaned *.pyc files",
+    )
+
+    parser.add_argument(
         '-v',
         '--verbose',
         action='store_true',
@@ -49,7 +86,13 @@ def _parse_args():
 
     args = parser.parse_args()
 
-    return args.dir, args.follow_symlinks, args.verbose, args.dry_run
+    return (
+        args.dir,
+        args.follow_symlinks,
+        args.no_prompt_on_orphan,
+        args.verbose,
+        args.dry_run,
+    )
 
 
 def _walk_path(
@@ -67,12 +110,17 @@ def _walk_path(
 
         if path.is_dir():
 
+            if path.name == '__pycache__':
+                logging.warning("'{}' ignored".format(path))
+                continue
+
             abs_path = path.resolve()
 
             if path.is_symlink():
                 if (
                         not follow_symlinks or
                         abs_path in resolved_symlink_path_set):
+
                     continue
                 else:
                     resolved_symlink_path_set.add(abs_path)
@@ -94,19 +142,15 @@ def _walk_path(
         py_file_paths = file_paths_by_suffix['.py']
         pyc_file_paths = file_paths_by_suffix['.pyc']
 
-        if len(py_file_paths) == 0:
-
-            if verbose:
-                for py_file_path in py_file_paths:
-                    logging.warning("Orphaned .pyc file: '{}'".format(
-                        py_file_path,
-                    ))
-
-            continue
+        is_orphan = len(py_file_paths) == 0
 
         for pyc_file_path in pyc_file_paths:
 
             if not dry_run:
+
+                if is_orphan and not user_confirm(pyc_file_path):
+                    continue
+
                 try:
                     pyc_file_path.unlink()
                 except PermissionError:
@@ -141,7 +185,14 @@ def safe_delete_pyc(
 
 
 def main():
-    dir_path, follow_symlinks, verbose, dry_run = _parse_args()
+
+    (dir_path,
+     follow_symlinks,
+     no_prompt_on_orphan,
+     verbose,
+     dry_run) = _parse_args()
+
+    user_confirm.delete_all = no_prompt_on_orphan
 
     safe_delete_pyc(
         dir_path,
