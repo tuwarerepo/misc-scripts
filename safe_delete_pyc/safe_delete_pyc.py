@@ -7,6 +7,7 @@ safe_delete_pyc.py
 import argparse
 import logging
 import os
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -170,7 +171,10 @@ def safe_delete_pyc(
         verbose=False,
         dry_run=False,
 ):
-    abs_dir_path = dir_path.resolve(strict=True)
+    if sys.version_info >= (3, 6):
+        abs_dir_path = dir_path.resolve(strict=True)
+    else:
+        abs_dir_path = dir_path.resolve()
 
     if not abs_dir_path.is_dir():
         raise NotADirectoryError
